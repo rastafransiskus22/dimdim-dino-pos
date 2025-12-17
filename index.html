@@ -21,14 +21,14 @@ input{width:100%;padding:12px;border-radius:10px;border:none;margin-bottom:10px}
 
 /* HEADER */
 header{
-  padding:18px;
+  padding:16px;
   background:#0b2f23;
   text-align:center;
-  font-size:20px;
+  font-size:18px;
   font-weight:bold;
 }
 
-/* CARD */
+/* BOX */
 .box{
   background:#134e3a;
   margin:14px;
@@ -36,12 +36,8 @@ header{
   border-radius:16px;
 }
 
-/* MENU GRID */
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
+/* MENU */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .menu-item{
   background:#22c55e;
   padding:14px;
@@ -65,6 +61,27 @@ header{
   border-radius:16px;
   width:90%;
   max-width:360px;
+}
+
+/* STRUK 58MM */
+#receipt{
+  width:58mm;
+  font-size:12px;
+  color:#000;
+  background:#fff;
+  padding:8px;
+}
+.rline{
+  display:flex;
+  justify-content:space-between;
+}
+.center-t{text-align:center}
+hr{border:none;border-top:1px dashed #000;margin:6px 0}
+
+@media print{
+  body *{visibility:hidden}
+  #receipt, #receipt *{visibility:visible}
+  #receipt{position:absolute;top:0;left:0}
 }
 </style>
 </head>
@@ -92,8 +109,8 @@ header{
 
 <div class="box">
   <button onclick="openOrderType()">KASIR</button>
-  <button onclick="alert('Menu nanti')">DAFTAR MENU</button>
-  <button onclick="alert('Laporan nanti')">LAPORAN</button>
+  <button onclick="alert('Daftar menu (next)')">DAFTAR MENU</button>
+  <button onclick="alert('Laporan (next)')">LAPORAN</button>
   <button onclick="logout()">LOGOUT</button>
 </div>
 </div>
@@ -102,20 +119,16 @@ header{
 <div id="kasirPage" style="display:none">
 <header>KASIR</header>
 
-<div class="box">
-  <b>Order Type:</b> <span id="orderTypeLabel"></span>
-</div>
+<div class="box"><b>Order Type:</b> <span id="orderTypeLabel"></span></div>
 
 <div class="box">
   <h3>Pilih Menu</h3>
   <div class="grid">
     <div class="menu-item" onclick="addItem('DIMSUM MIX 16',98000)">
-      DIMSUM MIX 16
-      <small>Rp 98.000</small>
+      DIMSUM MIX 16<small>Rp 98.000</small>
     </div>
     <div class="menu-item" onclick="addItem('DIMSUM MIX 8',55000)">
-      DIMSUM MIX 8
-      <small>Rp 55.000</small>
+      DIMSUM MIX 8<small>Rp 55.000</small>
     </div>
   </div>
 </div>
@@ -123,14 +136,14 @@ header{
 <div class="box">
   <h3>Keranjang</h3>
   <div id="cartList"></div>
-  <hr style="margin:10px 0">
-  <h2>Total: Rp <span id="total">0</span></h2>
+  <hr>
+  <b>Total: Rp <span id="total">0</span></b>
   <button onclick="openPayment()">BAYAR</button>
   <button onclick="backHome()">KEMBALI</button>
 </div>
 </div>
 
-<!-- ORDER TYPE MODAL -->
+<!-- ORDER TYPE -->
 <div id="orderModal" class="modal">
   <div class="modal-content">
     <h3>Pilih Order Type</h3>
@@ -143,7 +156,7 @@ header{
   </div>
 </div>
 
-<!-- PAYMENT MODAL -->
+<!-- PAYMENT -->
 <div id="paymentModal" class="modal">
   <div class="modal-content">
     <h3>Pilih Payment</h3>
@@ -156,11 +169,27 @@ header{
   </div>
 </div>
 
+<!-- STRUK -->
+<div id="receipt" style="display:none"></div>
+
 <script>
 const USERS=[{u:'admin',p:'1234'}];
-let orderType='';
-let cart=[];
-let lastStruk=Number(localStorage.getItem('lastStruk')||0);
+let cart=[], orderType='';
+
+function todayKey(){
+  return new Date().toISOString().slice(0,10);
+}
+
+function getStruk(){
+  const d=todayKey();
+  if(localStorage.getItem('strukDate')!==d){
+    localStorage.setItem('strukDate',d);
+    localStorage.setItem('strukNo',0);
+  }
+  let n=Number(localStorage.getItem('strukNo')||0)+1;
+  localStorage.setItem('strukNo',n);
+  return n;
+}
 
 function login(){
   if(!USERS.find(x=>x.u===username.value&&x.p===password.value)){
@@ -173,55 +202,68 @@ function showHome(){
   loginPage.style.display='none';
   homePage.style.display='block';
 }
-function logout(){
-  localStorage.clear();location.reload();
-}
+function logout(){localStorage.clear();location.reload()}
 
 function openOrderType(){orderModal.style.display='block'}
 function closeOrder(){orderModal.style.display='none'}
-function setOrder(type){
-  orderType=type;
-  orderTypeLabel.innerText=type;
+function setOrder(t){
+  orderType=t;
+  orderTypeLabel.innerText=t;
   orderModal.style.display='none';
   homePage.style.display='none';
   kasirPage.style.display='block';
 }
 
-function addItem(name,price){
-  cart.push({name,price});
-  renderCart();
-}
-function renderCart(){
+function addItem(n,p){cart.push({n,p});render()}
+function render(){
   cartList.innerHTML='';
-  let total=0;
+  let t=0;
   cart.forEach(i=>{
-    total+=i.price;
-    cartList.innerHTML+=`${i.name} - Rp ${i.price.toLocaleString()}<br>`;
+    t+=i.p;
+    cartList.innerHTML+=`${i.n} - Rp ${i.p.toLocaleString()}<br>`;
   });
-  document.getElementById('total').innerText=total.toLocaleString();
+  total.innerText=t.toLocaleString();
 }
 
 function backHome(){
+  cart=[];
+  render();
   kasirPage.style.display='none';
   homePage.style.display='block';
-  cart=[];
-  renderCart();
 }
 
 function openPayment(){
-  if(cart.length===0){alert('Keranjang kosong');return;}
+  if(!cart.length){alert('Keranjang kosong');return;}
   paymentModal.style.display='block';
 }
 function closePayment(){paymentModal.style.display='none'}
 
 function pay(method){
-  lastStruk++;
-  localStorage.setItem('lastStruk',lastStruk);
-  alert(
-    `STRUK #${lastStruk}\nOrder: ${orderType}\nPayment: ${method}\nTotal: Rp ${document.getElementById('total').innerText}`
-  );
+  const no=getStruk();
+  let t=0,items='';
+  cart.forEach(i=>{
+    t+=i.p;
+    items+=`<div class="rline"><span>${i.n}</span><span>${i.p.toLocaleString()}</span></div>`;
+  });
+
+  receipt.innerHTML=`
+    <div class="center-t"><b>DIMDIM DINO</b></div>
+    <div class="center-t">No ${no}</div>
+    <hr>
+    ${items}
+    <hr>
+    <div class="rline"><b>TOTAL</b><b>${t.toLocaleString()}</b></div>
+    <div class="center-t">Order: ${orderType}</div>
+    <div class="center-t">Pay: ${method}</div>
+    <hr>
+    <div class="center-t">Terima Kasih</div>
+  `;
+  receipt.style.display='block';
+  window.print();
+  receipt.style.display='none';
+
   cart=[];
-  renderCart();
+  render();
   paymentModal.style.display='none';
 }
 
@@ -229,4 +271,4 @@ if(localStorage.getItem('login')) showHome();
 </script>
 
 </body>
-      </html>
+                                                                </html>
