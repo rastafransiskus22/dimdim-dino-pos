@@ -9,6 +9,16 @@
 *{box-sizing:border-box;font-family:Arial;margin:0;padding:0}
 body{background:#0f3d2e;color:#fff}
 
+/* GENERAL */
+button,input{
+  width:100%;
+  padding:12px;
+  margin-bottom:12px;
+  border:none;
+  border-radius:10px;
+}
+button{background:#22c55e;font-weight:bold}
+
 /* LOGIN */
 .center{
   min-height:100vh;
@@ -19,23 +29,15 @@ body{background:#0f3d2e;color:#fff}
 .card{
   background:#134e3a;
   width:90%;
-  max-width:360px;
+  max-width:380px;
   padding:20px;
-  border-radius:14px;
+  border-radius:16px;
 }
-input,button{
-  width:100%;
-  padding:12px;
-  margin-bottom:12px;
-  border:none;
-  border-radius:8px;
-}
-button{background:#22c55e;font-weight:bold}
 .error{display:none;background:#dc2626;padding:10px;text-align:center}
 
 /* HEADER */
 header{
-  background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55));
+  background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,.6));
   padding:20px;
   text-align:center;
   font-size:20px;
@@ -43,7 +45,7 @@ header{
 }
 
 /* MENU */
-.menu{padding:14px}
+.menu{padding:16px}
 .menu button{margin-bottom:14px}
 
 /* MODAL */
@@ -54,15 +56,20 @@ header{
   display:none;
   align-items:center;
   justify-content:center;
+  z-index:99;
 }
 .modal-box{
   background:#134e3a;
   padding:20px;
-  border-radius:14px;
+  border-radius:16px;
   width:90%;
   max-width:320px;
 }
 .modal-box h3{text-align:center;margin-bottom:12px}
+
+/* KASIR */
+.kasir-page{padding:14px}
+.list div{margin-bottom:6px}
 </style>
 </head>
 
@@ -79,18 +86,40 @@ header{
   </div>
 </div>
 
-<!-- APP -->
-<div id="appPage" style="display:none">
+<!-- HOME -->
+<div id="homePage" style="display:none">
+  <header>DIMDIM DINO POS</header>
 
-<header>DIMDIM DINO POS</header>
-
-<div class="menu">
-  <button onclick="openKasir()">KASIR</button>
-  <button disabled>DAFTAR MENU</button>
-  <button disabled>LAPORAN</button>
-  <button onclick="logout()">LOGOUT</button>
+  <div class="menu">
+    <button onclick="openKasir()">KASIR</button>
+    <button disabled>DAFTAR MENU</button>
+    <button disabled>LAPORAN</button>
+    <button onclick="logout()">LOGOUT</button>
+  </div>
 </div>
 
+<!-- KASIR PAGE -->
+<div id="kasirPage" class="kasir-page" style="display:none">
+  <div class="card">
+    <h3>Kasir</h3>
+    <p>Order Type: <b id="orderLabel">-</b></p>
+  </div>
+
+  <div class="card">
+    <input id="itemName" placeholder="Nama Item">
+    <input id="itemQty" type="number" placeholder="Qty" value="1">
+    <input id="itemPrice" type="number" placeholder="Harga">
+    <button onclick="addItem()">Tambah Item</button>
+  </div>
+
+  <div class="card">
+    <h4>Daftar Item</h4>
+    <div id="itemList" class="list"></div>
+    <hr style="margin:10px 0">
+    <h3>Total: Rp <span id="total">0</span></h3>
+  </div>
+
+  <button onclick="backHome()">Kembali</button>
 </div>
 
 <!-- MODAL ORDER TYPE -->
@@ -108,41 +137,69 @@ header{
 
 <script>
 const USERS=[{u:'admin',p:'1234'}];
-let orderType=null;
+let cart=[], orderType=null;
 
+/* LOGIN */
 function login(){
   if(!USERS.find(x=>x.u===username.value&&x.p===password.value)){
     error.style.display='block';return;
   }
   localStorage.setItem('login','1');
-  showApp();
+  showHome();
 }
-
-function showApp(){
+function showHome(){
   loginPage.style.display='none';
-  appPage.style.display='block';
+  kasirPage.style.display='none';
+  homePage.style.display='block';
 }
-
 function logout(){
   localStorage.clear();
   location.reload();
 }
 
+/* KASIR */
 function openKasir(){
   orderModal.style.display='flex';
 }
-
 function closeModal(){
   orderModal.style.display='none';
 }
-
 function selectOrder(type){
   orderType=type;
+  orderLabel.innerText=type;
   closeModal();
-  alert('Order type: '+type);
+  homePage.style.display='none';
+  kasirPage.style.display='block';
 }
 
-if(localStorage.getItem('login')) showApp();
+/* ITEM */
+function addItem(){
+  const n=itemName.value;
+  const q=Number(itemQty.value);
+  const p=Number(itemPrice.value);
+  if(!n||!q||!p) return alert('Lengkapi item');
+
+  cart.push({n,q,p});
+  itemName.value=''; itemQty.value=1; itemPrice.value='';
+  render();
+}
+function render(){
+  let t=0,html='';
+  cart.forEach(i=>{
+    const s=i.q*i.p;
+    t+=s;
+    html+=`<div>${i.q}x ${i.n} - Rp ${s}</div>`;
+  });
+  itemList.innerHTML=html;
+  total.innerText=t.toLocaleString();
+}
+function backHome(){
+  kasirPage.style.display='none';
+  homePage.style.display='block';
+}
+
+/* AUTO LOGIN */
+if(localStorage.getItem('login')) showHome();
 </script>
 
 </body>
