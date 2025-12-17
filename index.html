@@ -8,220 +8,194 @@
 <style>
 *{box-sizing:border-box;font-family:Arial;margin:0;padding:0}
 body{background:#0f3d2e;color:#fff}
-button,input{width:100%;padding:12px;border:none;border-radius:10px;margin-top:8px}
-button{background:#22c55e;font-weight:bold}
+.page{display:none;padding:16px}
+.active{display:block}
 
-/* LAYOUT */
-header{background:#0b2f23;padding:14px;text-align:center;font-weight:bold}
-.box{background:#134e3a;margin:14px;padding:16px;border-radius:16px}
-.center{min-height:100vh;display:flex;align-items:center;justify-content:center}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.menu-btn{background:#22c55e;color:#000;padding:14px;border-radius:12px;text-align:center;font-weight:bold}
-
-/* MODAL */
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6)}
-.modal-content{background:#134e3a;margin:15% auto;padding:20px;border-radius:16px;width:90%;max-width:360px}
-
-/* STRUK */
-#receipt{width:58mm;background:#fff;color:#000;padding:8px;font-size:12px}
-.r{display:flex;justify-content:space-between}
-.c{text-align:center}
-hr{border:none;border-top:1px dashed #000;margin:6px 0}
-@media print{
-  body *{visibility:hidden}
-  #receipt,#receipt *{visibility:visible}
-  #receipt{position:absolute;top:0;left:0}
+header{
+  text-align:center;
+  padding:16px;
+  font-weight:bold;
+  font-size:20px;
+  background:#0b2f22;
 }
+
+.card{
+  background:#134e3a;
+  padding:16px;
+  border-radius:14px;
+  margin-bottom:14px;
+}
+
+button,input{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:10px;
+  font-weight:bold;
+}
+
+button{background:#22c55e}
+input{background:#fff;color:#000}
+
+.menu-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.menu-btn{
+  background:#22c55e;
+  color:#000;
+  padding:14px;
+  border-radius:12px;
+  text-align:center;
+}
+
+hr{margin:10px 0}
 </style>
 </head>
-
 <body>
 
-<!-- LOGIN -->
-<div id="loginPage" class="center">
-  <div class="box" style="width:90%;max-width:360px">
-    <h2 class="c">Dimdim Dino POS</h2>
-    <input id="username" placeholder="Username">
-    <input id="password" type="password" placeholder="Password">
-    <button onclick="login()">MASUK</button>
-  </div>
-</div>
+<header>DIMDIM DINO POS</header>
 
 <!-- HOME -->
-<div id="homePage" style="display:none">
-<header>DIMDIM DINO POS</header>
-<div class="box">
-  <button onclick="openOrder()">KASIR</button>
+<div id="home" class="page active">
+  <div class="card">
+    <h3>Bekerja Itu Punya Cerita</h3>
+    <p>Pelan tapi konsisten, biar jejakmu jadi berarti.</p>
+  </div>
+
+  <button onclick="openKasir()">KASIR</button>
   <button onclick="openMenu()">DAFTAR MENU</button>
-  <button onclick="alert('Laporan (next step)')">LAPORAN</button>
-  <button onclick="logout()">LOGOUT</button>
-</div>
+  <button onclick="openReport()">LAPORAN</button>
 </div>
 
 <!-- DAFTAR MENU -->
-<div id="menuPage" style="display:none">
-<header>DAFTAR MENU</header>
+<div id="menuPage" class="page">
+  <div class="card">
+    <h3>Tambah Menu</h3>
+    <input id="menuName" placeholder="Nama Menu">
+    <input id="menuPrice" type="number" placeholder="Harga">
+    <button onclick="addMenu()">Simpan Menu</button>
+  </div>
 
-<div class="box">
-  <input id="mName" placeholder="Nama Menu">
-  <input id="pCash" type="number" placeholder="Harga Cash">
-  <input id="pQris" type="number" placeholder="Harga QRIS">
-  <input id="pShopee" type="number" placeholder="Harga Shopee Food">
-  <input id="pGrab" type="number" placeholder="Harga Grab Food">
-  <input id="pGo" type="number" placeholder="Harga GoFood">
-  <button onclick="saveMenu()">SIMPAN MENU</button>
-</div>
+  <div class="card">
+    <h3>Daftar Menu</h3>
+    <div id="menuList"></div>
+  </div>
 
-<div class="box">
-  <h3>Daftar Menu</h3>
-  <div id="menuList"></div>
-  <button onclick="backHome()">KEMBALI</button>
-</div>
+  <button onclick="back()">Kembali</button>
 </div>
 
 <!-- KASIR -->
-<div id="kasirPage" style="display:none">
-<header>KASIR (<span id="orderLabel"></span>)</header>
-
-<div class="box">
-  <h3>Pilih Menu</h3>
-  <div class="grid" id="menuGrid"></div>
-</div>
-
-<div class="box">
-  <h3>Keranjang</h3>
-  <div id="cartList"></div>
-  <hr>
-  <b>Total: Rp <span id="total">0</span></b>
-  <button onclick="openPayment()">BAYAR</button>
-  <button onclick="backHome()">KEMBALI</button>
-</div>
-</div>
-
-<!-- ORDER TYPE -->
-<div id="orderModal" class="modal">
-  <div class="modal-content">
-    <h3>Pilih Order Type</h3>
-    <button onclick="setOrder('cash')">Cash</button>
-    <button onclick="setOrder('qris')">QRIS</button>
-    <button onclick="setOrder('shopee')">Shopee Food</button>
-    <button onclick="setOrder('grab')">Grab Food</button>
-    <button onclick="setOrder('gofood')">GoFood</button>
+<div id="kasirPage" class="page">
+  <div class="card">
+    <h3>Kasir</h3>
+    <p>Order Type: <b id="orderType">QRIS</b></p>
   </div>
-</div>
 
-<!-- PAYMENT -->
-<div id="payModal" class="modal">
-  <div class="modal-content">
-    <h3>Pilih Payment</h3>
-    <button onclick="pay('CASH')">Cash</button>
-    <button onclick="pay('QRIS')">QRIS</button>
-    <button onclick="pay('SHOPEE')">Shopee Food</button>
-    <button onclick="pay('GRAB')">Grab Food</button>
-    <button onclick="pay('GOFOOD')">GoFood</button>
+  <div class="card">
+    <h3>Pilih Menu</h3>
+    <div id="kasirMenu" class="menu-grid"></div>
   </div>
+
+  <div class="card">
+    <h3>Keranjang</h3>
+    <div id="cart"></div>
+    <hr>
+    <h2>Total: Rp <span id="total">0</span></h2>
+  </div>
+
+  <button onclick="printReceipt()">CETAK STRUK</button>
+  <button onclick="back()">Kembali</button>
 </div>
 
-<div id="receipt" style="display:none"></div>
+<!-- LAPORAN -->
+<div id="reportPage" class="page">
+  <div class="card">
+    <h3>Laporan</h3>
+    <p>Step berikutnya</p>
+  </div>
+  <button onclick="back()">Kembali</button>
+</div>
 
 <script>
-/* LOGIN */
-const USERS=[{u:'admin',p:'1234'}];
-function login(){
-  if(!USERS.find(x=>x.u===username.value&&x.p===password.value)){alert('Login gagal');return;}
-  localStorage.setItem('login',1);
-  show(homePage);
+let menus = JSON.parse(localStorage.getItem('menus')||'[]');
+let cart = [];
+
+function show(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
-function logout(){localStorage.clear();location.reload()}
-if(localStorage.getItem('login')) show(homePage);
 
-/* MENU DATA */
-let menus=JSON.parse(localStorage.getItem('menus')||'[]');
-let cart=[],orderType='cash';
+function back(){ show('home'); }
 
-function saveMenu(){
-  menus.push({
-    name:mName.value,
-    price:{
-      cash:+pCash.value,
-      qris:+pQris.value,
-      shopee:+pShopee.value,
-      grab:+pGrab.value,
-      gofood:+pGo.value
-    }
-  });
-  localStorage.setItem('menus',JSON.stringify(menus));
-  mName.value=pCash.value=pQris.value=pShopee.value=pGrab.value=pGo.value='';
+function openMenu(){
+  show('menuPage');
   renderMenuList();
 }
+
+function openKasir(){
+  show('kasirPage');
+  renderKasirMenu();
+  renderCart();
+}
+
+function openReport(){
+  show('reportPage');
+}
+
+function addMenu(){
+  const name=menuName.value;
+  const price=+menuPrice.value;
+  if(!name||!price) return alert('Lengkapi data');
+  menus.push({name,price});
+  localStorage.setItem('menus',JSON.stringify(menus));
+  menuName.value='';
+  menuPrice.value='';
+  renderMenuList();
+}
+
 function renderMenuList(){
   menuList.innerHTML='';
-  menus.forEach((m,i)=>{
-    menuList.innerHTML+=`${m.name}<br>`;
+  menus.forEach(m=>{
+    menuList.innerHTML+=`<div>${m.name} - Rp ${m.price}</div>`;
   });
 }
-function openMenu(){show(menuPage);renderMenuList()}
 
-/* KASIR */
-function openOrder(){orderModal.style.display='block'}
-function setOrder(t){
-  orderType=t;
-  orderLabel.innerText=t.toUpperCase();
-  orderModal.style.display='none';
-  show(kasirPage);
-  renderKasirMenu();
-}
 function renderKasirMenu(){
-  menuGrid.innerHTML='';
-  menus.forEach((m,i)=>{
-    menuGrid.innerHTML+=`
-      <div class="menu-btn" onclick="addItem(${i})">
-        ${m.name}<br>Rp ${m.price[orderType].toLocaleString()}
+  kasirMenu.innerHTML='';
+  menus.forEach(m=>{
+    kasirMenu.innerHTML+=`
+      <div class="menu-btn" onclick="addCart('${m.name}',${m.price})">
+        ${m.name}<br>Rp ${m.price}
       </div>`;
   });
 }
-function addItem(i){
-  const m=menus[i];
-  cart.push({n:m.name,p:m.price[orderType]});
+
+function addCart(name,price){
+  cart.push({name,price});
   renderCart();
 }
+
 function renderCart(){
-  cartList.innerHTML='';
-  let t=0;
-  cart.forEach(i=>{t+=i.p;cartList.innerHTML+=`${i.n} - Rp ${i.p.toLocaleString()}<br>`});
-  total.innerText=t.toLocaleString();
+  cart.innerHTML='';
+  let total=0;
+  cart.forEach(c=>{
+    total+=c.price;
+    cart.innerHTML+=`<div>${c.name} - Rp ${c.price}</div>`;
+  });
+  document.getElementById('total').innerText=total.toLocaleString('id-ID');
 }
 
-/* STRUK */
-function strukNo(){
-  const d=new Date().toISOString().slice(0,10);
-  if(localStorage.getItem('d')!==d){localStorage.setItem('d',d);localStorage.setItem('n',0);}
-  let n=+localStorage.getItem('n')+1;localStorage.setItem('n',n);return n;
-}
-function openPayment(){if(!cart.length)return alert('Keranjang kosong');payModal.style.display='block'}
-function pay(method){
-  const no=strukNo();
-  let t=0,items='';
-  cart.forEach(i=>{t+=i.p;items+=`<div class="r"><span>${i.n}</span><span>${i.p.toLocaleString()}</span></div>`});
-  receipt.innerHTML=`
-    <div class="c"><b>DIMDIM DINO</b></div>
-    <div class="c">No ${no}</div><hr>${items}<hr>
-    <div class="r"><b>TOTAL</b><b>${t.toLocaleString()}</b></div>
-    <div class="c">${orderType.toUpperCase()} - ${method}</div>
-    <div class="c">Terima Kasih</div>`;
-  receipt.style.display='block';
+function printReceipt(){
+  if(cart.length===0) return alert('Keranjang kosong');
   window.print();
-  receipt.style.display='none';
-  cart=[];renderCart();payModal.style.display='none';
+  cart=[];
+  renderCart();
 }
-
-/* NAV */
-function show(p){
-  [loginPage,homePage,menuPage,kasirPage].forEach(x=>x.style.display='none');
-  p.style.display='block';
-}
-function backHome(){cart=[];renderCart();show(homePage)}
 </script>
 
 </body>
-    </html>
+</html>
