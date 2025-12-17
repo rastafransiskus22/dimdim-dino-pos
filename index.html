@@ -2,156 +2,129 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dimdim Dino POS</title>
 
 <style>
-*{box-sizing:border-box;font-family:Arial;margin:0;padding:0}
-body{background:#0f3d2e;color:#fff}
-.page{display:none;padding:16px}
-.active{display:block}
-
-header{
-  text-align:center;
-  padding:16px;
-  font-weight:bold;
-  font-size:20px;
-  background:#0b2f22;
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f3d2e;
+  color:#fff;
 }
-
-.card{
-  background:#134e3a;
-  padding:16px;
-  border-radius:14px;
-  margin-bottom:14px;
-}
-
-button,input{
+button{
   width:100%;
-  padding:12px;
-  margin-top:10px;
+  padding:14px;
+  margin:8px 0;
   border:none;
   border-radius:10px;
+  background:#22c55e;
   font-weight:bold;
+  font-size:16px;
 }
-
-button{background:#22c55e}
-input{background:#fff;color:#000}
-
+input{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  border-radius:8px;
+  border:none;
+}
+.card{
+  background:#134e3a;
+  margin:14px;
+  padding:16px;
+  border-radius:14px;
+}
+header{
+  padding:16px;
+  text-align:center;
+  font-weight:bold;
+  font-size:20px;
+}
+.hidden{display:none}
 .menu-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
 }
-
-.menu-btn{
+.menu-item{
   background:#22c55e;
   color:#000;
   padding:14px;
   border-radius:12px;
   text-align:center;
+  font-weight:bold;
 }
-
-hr{margin:10px 0}
+hr{border:1px solid #1f6f55}
 </style>
 </head>
+
 <body>
 
 <header>DIMDIM DINO POS</header>
 
 <!-- HOME -->
-<div id="home" class="page active">
-  <div class="card">
-    <h3>Bekerja Itu Punya Cerita</h3>
-    <p>Pelan tapi konsisten, biar jejakmu jadi berarti.</p>
-  </div>
-
+<div id="home" class="card">
   <button onclick="openKasir()">KASIR</button>
   <button onclick="openMenu()">DAFTAR MENU</button>
-  <button onclick="openReport()">LAPORAN</button>
 </div>
 
 <!-- DAFTAR MENU -->
-<div id="menuPage" class="page">
-  <div class="card">
-    <h3>Tambah Menu</h3>
-    <input id="menuName" placeholder="Nama Menu">
-    <input id="menuPrice" type="number" placeholder="Harga">
-    <button onclick="addMenu()">Simpan Menu</button>
-  </div>
-
-  <div class="card">
-    <h3>Daftar Menu</h3>
-    <div id="menuList"></div>
-  </div>
-
+<div id="menuPage" class="card hidden">
+  <h3>Daftar Menu</h3>
+  <input id="menuName" placeholder="Nama menu">
+  <input id="menuPrice" type="number" placeholder="Harga">
+  <button onclick="addMenu()">Simpan Menu</button>
+  <div id="menuList"></div>
   <button onclick="back()">Kembali</button>
 </div>
 
 <!-- KASIR -->
-<div id="kasirPage" class="page">
-  <div class="card">
-    <h3>Kasir</h3>
-    <p>Order Type: <b id="orderType">QRIS</b></p>
-  </div>
+<div id="kasirPage" class="card hidden">
+  <h3>Kasir</h3>
+  <p>Order Type: <b id="orderType">QRIS</b></p>
 
-  <div class="card">
-    <h3>Pilih Menu</h3>
-    <div id="kasirMenu" class="menu-grid"></div>
-  </div>
+  <div class="menu-grid" id="menuButtons"></div>
 
-  <div class="card">
-    <h3>Keranjang</h3>
-    <div id="cart"></div>
-    <hr>
-    <h2>Total: Rp <span id="total">0</span></h2>
-  </div>
+  <hr>
+  <div id="cart"></div>
+  <h3>Total: Rp <span id="total">0</span></h3>
 
   <button onclick="printReceipt()">CETAK STRUK</button>
   <button onclick="back()">Kembali</button>
 </div>
 
-<!-- LAPORAN -->
-<div id="reportPage" class="page">
-  <div class="card">
-    <h3>Laporan</h3>
-    <p>Step berikutnya</p>
-  </div>
-  <button onclick="back()">Kembali</button>
-</div>
-
 <script>
-let menus = JSON.parse(localStorage.getItem('menus')||'[]');
+let menus = JSON.parse(localStorage.getItem('menus')) || [];
 let cart = [];
+let total = 0;
 
-function show(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+function saveMenus(){
+  localStorage.setItem('menus',JSON.stringify(menus));
 }
 
-function back(){ show('home'); }
-
 function openMenu(){
-  show('menuPage');
+  home.classList.add('hidden');
+  menuPage.classList.remove('hidden');
   renderMenuList();
 }
 
 function openKasir(){
-  show('kasirPage');
+  home.classList.add('hidden');
+  kasirPage.classList.remove('hidden');
   renderKasirMenu();
-  renderCart();
 }
 
-function openReport(){
-  show('reportPage');
+function back(){
+  location.reload();
 }
 
 function addMenu(){
-  const name=menuName.value;
-  const price=+menuPrice.value;
-  if(!name||!price) return alert('Lengkapi data');
-  menus.push({name,price});
-  localStorage.setItem('menus',JSON.stringify(menus));
+  menus.push({
+    name:menuName.value,
+    price:Number(menuPrice.value)
+  });
+  saveMenus();
   menuName.value='';
   menuPrice.value='';
   renderMenuList();
@@ -160,40 +133,62 @@ function addMenu(){
 function renderMenuList(){
   menuList.innerHTML='';
   menus.forEach(m=>{
-    menuList.innerHTML+=`<div>${m.name} - Rp ${m.price}</div>`;
+    menuList.innerHTML+=`<p>${m.name} - Rp ${m.price.toLocaleString()}</p>`;
   });
 }
 
 function renderKasirMenu(){
-  kasirMenu.innerHTML='';
+  menuButtons.innerHTML='';
   menus.forEach(m=>{
-    kasirMenu.innerHTML+=`
-      <div class="menu-btn" onclick="addCart('${m.name}',${m.price})">
-        ${m.name}<br>Rp ${m.price}
+    menuButtons.innerHTML+=`
+      <div class="menu-item" onclick="addCart('${m.name}',${m.price})">
+        ${m.name}<br>Rp ${m.price.toLocaleString()}
       </div>`;
   });
 }
 
 function addCart(name,price){
   cart.push({name,price});
+  total+=price;
   renderCart();
 }
 
 function renderCart(){
   cart.innerHTML='';
-  let total=0;
-  cart.forEach(c=>{
-    total+=c.price;
-    cart.innerHTML+=`<div>${c.name} - Rp ${c.price}</div>`;
+  document.getElementById('cart').innerHTML='';
+  cart.forEach(i=>{
+    document.getElementById('cart').innerHTML+=
+      `<div>${i.name} <span style="float:right">Rp ${i.price.toLocaleString()}</span></div>`;
   });
-  document.getElementById('total').innerText=total.toLocaleString('id-ID');
+  document.getElementById('total').innerText=total.toLocaleString();
 }
 
 function printReceipt(){
-  if(cart.length===0) return alert('Keranjang kosong');
-  window.print();
-  cart=[];
-  renderCart();
+  let win=window.open('','','width=300');
+  win.document.write(`
+  <style>
+  body{font-family:monospace;font-size:12px}
+  .r{text-align:right}
+  </style>
+
+  <center><b>DIMDIM DINO</b></center>
+  <center>--------------------</center>
+  <p>No: ${Date.now()}</p>
+  <p>${new Date().toLocaleString()}</p>
+  <p>Order: QRIS</p>
+  <center>--------------------</center>
+
+  ${cart.map(i=>`
+    <div>${i.name}<span style="float:right">${i.price.toLocaleString()}</span></div>
+  `).join('')}
+
+  <center>--------------------</center>
+  <b>Total<span style="float:right">${total.toLocaleString()}</span></b>
+  <center>--------------------</center>
+  <center>Terima Kasih</center>
+  `);
+  win.print();
+  win.close();
 }
 </script>
 
