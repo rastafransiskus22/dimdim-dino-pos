@@ -8,33 +8,29 @@
 <style>
 *{box-sizing:border-box;font-family:Arial;margin:0;padding:0}
 body{background:#0f3d2e;color:#fff}
-
-button{
-  width:100%;padding:14px;border:none;border-radius:10px;
-  background:#22c55e;font-weight:bold;margin-top:10px
-}
+button{width:100%;padding:14px;border:none;border-radius:12px;background:#22c55e;font-weight:bold;margin-top:10px}
 input{width:100%;padding:12px;border-radius:10px;border:none;margin-bottom:10px}
 
-/* LOGIN */
-.center{min-height:100vh;display:flex;align-items:center;justify-content:center}
-.card{background:#134e3a;padding:20px;border-radius:16px;width:90%;max-width:360px}
-
-/* HEADER */
+/* LAYOUT */
 header{
-  padding:16px;
   background:#0b2f23;
-  text-align:center;
-  font-size:18px;
-  font-weight:bold;
+  padding:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
+header span{font-weight:bold}
 
-/* BOX */
+/* CARD */
 .box{
   background:#134e3a;
   margin:14px;
   padding:16px;
   border-radius:16px;
 }
+
+/* LOGIN */
+.center{min-height:100vh;display:flex;align-items:center;justify-content:center}
 
 /* MENU */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -63,24 +59,21 @@ header{
   max-width:360px;
 }
 
-/* STRUK 58MM */
+/* STRUK */
 #receipt{
   width:58mm;
-  font-size:12px;
-  color:#000;
   background:#fff;
+  color:#000;
   padding:8px;
+  font-size:12px;
 }
-.rline{
-  display:flex;
-  justify-content:space-between;
-}
-.center-t{text-align:center}
+.r{display:flex;justify-content:space-between}
+.c{text-align:center}
 hr{border:none;border-top:1px dashed #000;margin:6px 0}
 
 @media print{
   body *{visibility:hidden}
-  #receipt, #receipt *{visibility:visible}
+  #receipt,#receipt *{visibility:visible}
   #receipt{position:absolute;top:0;left:0}
 }
 </style>
@@ -90,8 +83,8 @@ hr{border:none;border-top:1px dashed #000;margin:6px 0}
 
 <!-- LOGIN -->
 <div id="loginPage" class="center">
-  <div class="card">
-    <h2 style="text-align:center">Dimdim Dino POS</h2>
+  <div class="box" style="width:90%;max-width:360px">
+    <h2 class="c">Dimdim Dino POS</h2>
     <input id="username" placeholder="Username">
     <input id="password" type="password" placeholder="Password">
     <button onclick="login()">MASUK</button>
@@ -100,7 +93,10 @@ hr{border:none;border-top:1px dashed #000;margin:6px 0}
 
 <!-- HOME -->
 <div id="homePage" style="display:none">
-<header>DIMDIM DINO POS</header>
+<header>
+  <span>DIMDIM DINO POS</span>
+  <button style="width:auto;padding:8px 12px" onclick="connectPrinter()">🖨️</button>
+</header>
 
 <div class="box">
   <h3>Bekerja Itu Punya Cerita</h3>
@@ -108,8 +104,8 @@ hr{border:none;border-top:1px dashed #000;margin:6px 0}
 </div>
 
 <div class="box">
-  <button onclick="openOrderType()">KASIR</button>
-  <button onclick="alert('Daftar menu (next)')">DAFTAR MENU</button>
+  <button onclick="openOrder()">KASIR</button>
+  <button onclick="alert('Daftar Menu (next)')">DAFTAR MENU</button>
   <button onclick="alert('Laporan (next)')">LAPORAN</button>
   <button onclick="logout()">LOGOUT</button>
 </div>
@@ -117,9 +113,10 @@ hr{border:none;border-top:1px dashed #000;margin:6px 0}
 
 <!-- KASIR -->
 <div id="kasirPage" style="display:none">
-<header>KASIR</header>
-
-<div class="box"><b>Order Type:</b> <span id="orderTypeLabel"></span></div>
+<header>
+  <span>KASIR</span>
+  <span id="orderLabel"></span>
+</header>
 
 <div class="box">
   <h3>Pilih Menu</h3>
@@ -135,7 +132,7 @@ hr{border:none;border-top:1px dashed #000;margin:6px 0}
 
 <div class="box">
   <h3>Keranjang</h3>
-  <div id="cartList"></div>
+  <div id="cart"></div>
   <hr>
   <b>Total: Rp <span id="total">0</span></b>
   <button onclick="openPayment()">BAYAR</button>
@@ -157,15 +154,14 @@ hr{border:none;border-top:1px dashed #000;margin:6px 0}
 </div>
 
 <!-- PAYMENT -->
-<div id="paymentModal" class="modal">
+<div id="payModal" class="modal">
   <div class="modal-content">
-    <h3>Pilih Payment</h3>
+    <h3>Metode Pembayaran</h3>
     <button onclick="pay('CASH')">Cash</button>
     <button onclick="pay('QRIS')">QRIS</button>
     <button onclick="pay('SHOPEE FOOD')">Shopee Food</button>
     <button onclick="pay('GRAB FOOD')">Grab Food</button>
     <button onclick="pay('GOFOOD')">GoFood</button>
-    <button style="background:#dc2626" onclick="closePayment()">Batal</button>
   </div>
 </div>
 
@@ -173,102 +169,92 @@ hr{border:none;border-top:1px dashed #000;margin:6px 0}
 <div id="receipt" style="display:none"></div>
 
 <script>
+/* LOGIN */
 const USERS=[{u:'admin',p:'1234'}];
-let cart=[], orderType='';
-
-function todayKey(){
-  return new Date().toISOString().slice(0,10);
-}
-
-function getStruk(){
-  const d=todayKey();
-  if(localStorage.getItem('strukDate')!==d){
-    localStorage.setItem('strukDate',d);
-    localStorage.setItem('strukNo',0);
-  }
-  let n=Number(localStorage.getItem('strukNo')||0)+1;
-  localStorage.setItem('strukNo',n);
-  return n;
-}
-
 function login(){
   if(!USERS.find(x=>x.u===username.value&&x.p===password.value)){
     alert('Login gagal');return;
   }
   localStorage.setItem('login',1);
-  showHome();
-}
-function showHome(){
   loginPage.style.display='none';
   homePage.style.display='block';
 }
 function logout(){localStorage.clear();location.reload()}
+if(localStorage.getItem('login')){loginPage.style.display='none';homePage.style.display='block'}
 
-function openOrderType(){orderModal.style.display='block'}
+/* ORDER */
+let cart=[],orderType='';
+function openOrder(){orderModal.style.display='block'}
 function closeOrder(){orderModal.style.display='none'}
 function setOrder(t){
   orderType=t;
-  orderTypeLabel.innerText=t;
+  orderLabel.innerText=t;
   orderModal.style.display='none';
   homePage.style.display='none';
   kasirPage.style.display='block';
 }
-
 function addItem(n,p){cart.push({n,p});render()}
 function render(){
-  cartList.innerHTML='';
-  let t=0;
-  cart.forEach(i=>{
-    t+=i.p;
-    cartList.innerHTML+=`${i.n} - Rp ${i.p.toLocaleString()}<br>`;
-  });
+  cart.innerHTML='';
+  let t=0,html='';
+  cart.forEach(i=>{t+=i.p;html+=`${i.n} - Rp ${i.p.toLocaleString()}<br>`});
+  cartDiv.innerHTML=html;
   total.innerText=t.toLocaleString();
 }
+const cartDiv=document.getElementById('cart');
+function backHome(){cart=[];render();kasirPage.style.display='none';homePage.style.display='block'}
 
-function backHome(){
-  cart=[];
-  render();
-  kasirPage.style.display='none';
-  homePage.style.display='block';
+/* STRUK NUMBER */
+function today(){return new Date().toISOString().slice(0,10)}
+function strukNo(){
+  if(localStorage.getItem('d')!==today()){
+    localStorage.setItem('d',today());
+    localStorage.setItem('n',0);
+  }
+  let n=+localStorage.getItem('n')+1;
+  localStorage.setItem('n',n);
+  return n;
 }
 
-function openPayment(){
-  if(!cart.length){alert('Keranjang kosong');return;}
-  paymentModal.style.display='block';
-}
-function closePayment(){paymentModal.style.display='none'}
-
-function pay(method){
-  const no=getStruk();
+/* PAYMENT */
+function openPayment(){if(!cart.length)return alert('Keranjang kosong');payModal.style.display='block'}
+function pay(m){
+  const no=strukNo();
   let t=0,items='';
-  cart.forEach(i=>{
-    t+=i.p;
-    items+=`<div class="rline"><span>${i.n}</span><span>${i.p.toLocaleString()}</span></div>`;
-  });
-
+  cart.forEach(i=>{t+=i.p;items+=`<div class="r"><span>${i.n}</span><span>${i.p.toLocaleString()}</span></div>`});
   receipt.innerHTML=`
-    <div class="center-t"><b>DIMDIM DINO</b></div>
-    <div class="center-t">No ${no}</div>
-    <hr>
-    ${items}
-    <hr>
-    <div class="rline"><b>TOTAL</b><b>${t.toLocaleString()}</b></div>
-    <div class="center-t">Order: ${orderType}</div>
-    <div class="center-t">Pay: ${method}</div>
-    <hr>
-    <div class="center-t">Terima Kasih</div>
-  `;
+    <div class="c"><b>DIMDIM DINO</b></div>
+    <div class="c">No ${no}</div><hr>
+    ${items}<hr>
+    <div class="r"><b>TOTAL</b><b>${t.toLocaleString()}</b></div>
+    <div class="c">${orderType} - ${m}</div>
+    <div class="c">Terima Kasih</div>`;
   receipt.style.display='block';
-  window.print();
+  printReceipt();
   receipt.style.display='none';
-
-  cart=[];
-  render();
-  paymentModal.style.display='none';
+  cart=[];render();
+  payModal.style.display='none';
 }
 
-if(localStorage.getItem('login')) showHome();
+/* BLUETOOTH */
+let printer=null;
+async function connectPrinter(){
+  try{
+    printer=await navigator.bluetooth.requestDevice({
+      filters:[{namePrefix:'RP'}],
+      optionalServices:[0x18f0]
+    });
+    alert('Printer terhubung');
+  }catch(e){alert('Gagal konek printer')}
+}
+function printReceipt(){
+  if(printer){
+    window.print(); // placeholder ESC/POS next step
+  }else{
+    window.print();
+  }
+}
 </script>
 
 </body>
-                                                                </html>
+  </html>
