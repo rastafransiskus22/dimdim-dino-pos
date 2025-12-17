@@ -8,111 +8,225 @@
 <style>
 *{box-sizing:border-box;font-family:Arial;margin:0;padding:0}
 body{background:#0f3d2e;color:#fff}
-button,input{width:100%;padding:12px;border:none;border-radius:10px;margin-bottom:10px}
-button{background:#22c55e;font-weight:bold}
-.card{background:#134e3a;padding:16px;border-radius:16px;margin-bottom:14px}
-header{padding:16px;text-align:center;font-weight:bold;font-size:20px}
 
-/* GRID MENU */
+button{
+  width:100%;padding:14px;border:none;border-radius:10px;
+  background:#22c55e;font-weight:bold;margin-top:10px
+}
+input{width:100%;padding:12px;border-radius:10px;border:none;margin-bottom:10px}
+
+/* LOGIN */
+.center{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.card{background:#134e3a;padding:20px;border-radius:16px;width:90%;max-width:360px}
+
+/* HEADER */
+header{
+  padding:18px;
+  background:#0b2f23;
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+}
+
+/* CARD */
+.box{
+  background:#134e3a;
+  margin:14px;
+  padding:16px;
+  border-radius:16px;
+}
+
+/* MENU GRID */
 .grid{
   display:grid;
-  grid-template-columns:repeat(2,1fr);
+  grid-template-columns:1fr 1fr;
   gap:12px;
 }
-.menu-btn{
+.menu-item{
   background:#22c55e;
-  color:#000;
-  padding:16px;
+  padding:14px;
+  border-radius:14px;
   text-align:center;
-  border-radius:12px;
   font-weight:bold;
+}
+.menu-item small{display:block;font-weight:normal}
+
+/* MODAL */
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+}
+.modal-content{
+  background:#134e3a;
+  margin:20% auto;
+  padding:20px;
+  border-radius:16px;
+  width:90%;
+  max-width:360px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
+<div id="loginPage" class="center">
+  <div class="card">
+    <h2 style="text-align:center">Dimdim Dino POS</h2>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">MASUK</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="homePage" style="display:none">
 <header>DIMDIM DINO POS</header>
 
-<div class="card">
-  Order Type: <b id="orderLabel">QRIS</b>
+<div class="box">
+  <h3>Bekerja Itu Punya Cerita</h3>
+  <p>Pelan tapi konsisten, biar jejakmu jadi berarti.</p>
 </div>
 
-<div class="card">
+<div class="box">
+  <button onclick="openOrderType()">KASIR</button>
+  <button onclick="alert('Menu nanti')">DAFTAR MENU</button>
+  <button onclick="alert('Laporan nanti')">LAPORAN</button>
+  <button onclick="logout()">LOGOUT</button>
+</div>
+</div>
+
+<!-- KASIR -->
+<div id="kasirPage" style="display:none">
+<header>KASIR</header>
+
+<div class="box">
+  <b>Order Type:</b> <span id="orderTypeLabel"></span>
+</div>
+
+<div class="box">
   <h3>Pilih Menu</h3>
-  <div class="grid" id="menuGrid"></div>
+  <div class="grid">
+    <div class="menu-item" onclick="addItem('DIMSUM MIX 16',98000)">
+      DIMSUM MIX 16
+      <small>Rp 98.000</small>
+    </div>
+    <div class="menu-item" onclick="addItem('DIMSUM MIX 8',55000)">
+      DIMSUM MIX 8
+      <small>Rp 55.000</small>
+    </div>
+  </div>
 </div>
 
-<div class="card">
+<div class="box">
   <h3>Keranjang</h3>
   <div id="cartList"></div>
-  <hr>
+  <hr style="margin:10px 0">
   <h2>Total: Rp <span id="total">0</span></h2>
+  <button onclick="openPayment()">BAYAR</button>
+  <button onclick="backHome()">KEMBALI</button>
+</div>
+</div>
+
+<!-- ORDER TYPE MODAL -->
+<div id="orderModal" class="modal">
+  <div class="modal-content">
+    <h3>Pilih Order Type</h3>
+    <button onclick="setOrder('CASH')">Cash</button>
+    <button onclick="setOrder('QRIS')">QRIS</button>
+    <button onclick="setOrder('SHOPEE FOOD')">Shopee Food</button>
+    <button onclick="setOrder('GRAB FOOD')">Grab Food</button>
+    <button onclick="setOrder('GOFOOD')">GoFood</button>
+    <button style="background:#dc2626" onclick="closeOrder()">Batal</button>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div id="paymentModal" class="modal">
+  <div class="modal-content">
+    <h3>Pilih Payment</h3>
+    <button onclick="pay('CASH')">Cash</button>
+    <button onclick="pay('QRIS')">QRIS</button>
+    <button onclick="pay('SHOPEE FOOD')">Shopee Food</button>
+    <button onclick="pay('GRAB FOOD')">Grab Food</button>
+    <button onclick="pay('GOFOOD')">GoFood</button>
+    <button style="background:#dc2626" onclick="closePayment()">Batal</button>
+  </div>
 </div>
 
 <script>
-// ===== DATA MENU (EDIT DI SINI SAJA) =====
-const MENUS=[
-  {
-    name:'DIMSUM MIX 16',
-    price:{
-      CASH:90000,
-      QRIS:98000,
-      GOFOOD:105000,
-      GRABFOOD:103000,
-      SHOPEEFOOD:102000
-    }
-  },
-  {
-    name:'DIMSUM MIX 8',
-    price:{
-      CASH:50000,
-      QRIS:55000,
-      GOFOOD:60000,
-      GRABFOOD:58000,
-      SHOPEEFOOD:57000
-    }
-  }
-];
-
-// ===== STATE =====
-let orderType='QRIS';
+const USERS=[{u:'admin',p:'1234'}];
+let orderType='';
 let cart=[];
+let lastStruk=Number(localStorage.getItem('lastStruk')||0);
 
-// ===== RENDER MENU =====
-function renderMenu(){
-  menuGrid.innerHTML='';
-  MENUS.forEach((m,i)=>{
-    const div=document.createElement('div');
-    div.className='menu-btn';
-    div.innerHTML=`${m.name}<br>Rp ${m.price[orderType].toLocaleString()}`;
-    div.onclick=()=>addItem(i);
-    menuGrid.appendChild(div);
-  });
+function login(){
+  if(!USERS.find(x=>x.u===username.value&&x.p===password.value)){
+    alert('Login gagal');return;
+  }
+  localStorage.setItem('login',1);
+  showHome();
+}
+function showHome(){
+  loginPage.style.display='none';
+  homePage.style.display='block';
+}
+function logout(){
+  localStorage.clear();location.reload();
 }
 
-// ===== ADD ITEM =====
-function addItem(i){
-  const m=MENUS[i];
-  cart.push({name:m.name,price:m.price[orderType]});
+function openOrderType(){orderModal.style.display='block'}
+function closeOrder(){orderModal.style.display='none'}
+function setOrder(type){
+  orderType=type;
+  orderTypeLabel.innerText=type;
+  orderModal.style.display='none';
+  homePage.style.display='none';
+  kasirPage.style.display='block';
+}
+
+function addItem(name,price){
+  cart.push({name,price});
+  renderCart();
+}
+function renderCart(){
+  cartList.innerHTML='';
+  let total=0;
+  cart.forEach(i=>{
+    total+=i.price;
+    cartList.innerHTML+=`${i.name} - Rp ${i.price.toLocaleString()}<br>`;
+  });
+  document.getElementById('total').innerText=total.toLocaleString();
+}
+
+function backHome(){
+  kasirPage.style.display='none';
+  homePage.style.display='block';
+  cart=[];
   renderCart();
 }
 
-// ===== CART =====
-function renderCart(){
-  let html='',t=0;
-  cart.forEach(c=>{
-    html+=`<div>${c.name} - Rp ${c.price.toLocaleString()}</div>`;
-    t+=c.price;
-  });
-  cartList.innerHTML=html;
-  total.innerText=t.toLocaleString();
+function openPayment(){
+  if(cart.length===0){alert('Keranjang kosong');return;}
+  paymentModal.style.display='block';
+}
+function closePayment(){paymentModal.style.display='none'}
+
+function pay(method){
+  lastStruk++;
+  localStorage.setItem('lastStruk',lastStruk);
+  alert(
+    `STRUK #${lastStruk}\nOrder: ${orderType}\nPayment: ${method}\nTotal: Rp ${document.getElementById('total').innerText}`
+  );
+  cart=[];
+  renderCart();
+  paymentModal.style.display='none';
 }
 
-// INIT
-orderLabel.innerText=orderType;
-renderMenu();
+if(localStorage.getItem('login')) showHome();
 </script>
 
 </body>
-</html>
+      </html>
